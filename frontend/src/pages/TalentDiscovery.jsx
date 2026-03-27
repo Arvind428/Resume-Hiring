@@ -70,11 +70,21 @@ export default function TalentDiscovery() {
     ];
     try {
       for (const d of demos) {
-        const res = await createCandidate(d);
-        await analyzeCandidate(res.data.id);
+        try {
+          const res = await createCandidate(d);
+          await analyzeCandidate(res.data.id);
+        } catch (innerErr) {
+          if (innerErr.response?.status === 409) {
+            console.warn(`Demo candidate ${d.name} already exists! Skipping.`);
+          } else {
+            console.error(`Failed to load demo ${d.name}`, innerErr);
+          }
+        }
       }
-    } catch(e) { console.error('Demo load failed', e); }
-    load();
+    } finally { 
+      load();
+      setLoading(false);
+    }
   };
 
   const handleAnalyze = async (id, e) => {
