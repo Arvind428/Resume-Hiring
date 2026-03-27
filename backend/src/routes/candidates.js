@@ -8,7 +8,6 @@ const router = Router();
 // POST /api/candidates — create candidate
 router.post('/', async (req, res, next) => {
   try {
-  try {
     const { name, email, role, github_url, portfolio_url, linkedin_url, skills } = req.body;
     if (!name || !email || !role) return res.status(400).json({ error: 'name, email, role are required' });
 
