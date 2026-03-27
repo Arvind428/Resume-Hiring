@@ -64,9 +64,9 @@ export default function TalentDiscovery() {
     if (!confirm('Load 3 demo candidates for the hackathon?')) return;
     setLoading(true);
     const demos = [
-      { name: "Dan Abramov", email: "dan@react.dev", role: "Software Engineer", github_url: "https://github.com/gaearon", portfolio_url: "https://overreacted.io", linkedin_url: "https://linkedin.com/in/danabramov", skills: ["React", "JavaScript", "Redux"] },
-      { name: "Mona Lisa", email: "mona@github.com", role: "DevOps Engineer", github_url: "https://github.com/octocat", portfolio_url: "https://octodex.github.com", linkedin_url: "", skills: ["Ruby", "Git", "Infrastructure"] },
-      { name: "Alice Smith", email: "alice@marketing.com", role: "Marketing Manager", github_url: "", portfolio_url: "https://alicesmith.com", linkedin_url: "https://linkedin.com/in/alicesmith", skills: ["SEO", "Content Strategy", "Analytics"] }
+      { name: "Arvind (The Balanced Pro)", email: `arvind_${Date.now()}@demo.com`, role: "Full Stack Engineer", github_url: "https://github.com/Arvind428", portfolio_url: "", linkedin_url: "https://linkedin.com/in/arvind", skills: ["React", "Node.js", "AI Integration"] },
+      { name: "Linus (The Hidden Gem)", email: `linus_${Date.now()}@demo.com`, role: "Systems Architect", github_url: "https://github.com/torvalds", portfolio_url: "", linkedin_url: "", skills: ["C", "Linux", "Kernel", "Git"] },
+      { name: "Chad (The Resume Hero)", email: `chad_${Date.now()}@demo.com`, role: "Senior Developer", github_url: "https://github.com/empty-user-123", portfolio_url: "", linkedin_url: "https://linkedin.com/in/ex-google-ceo", skills: ["Management", "Agile", "Synergy"] }
     ];
     try {
       for (const d of demos) {
