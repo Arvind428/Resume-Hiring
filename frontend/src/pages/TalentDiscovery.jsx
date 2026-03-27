@@ -23,7 +23,7 @@ export default function TalentDiscovery() {
   const [showModal, setShowModal] = useState(false);
   const [search, setSearch] = useState('');
   const [analyzing, setAnalyzing] = useState({});
-  const [form, setForm] = useState({ name: '', email: '', role: '', github_url: '', portfolio_url: '', skills: '' });
+  const [form, setForm] = useState({ name: '', email: '', role: '', github_url: '', portfolio_url: '', linkedin_url: '', skills: '' });
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
@@ -53,11 +53,28 @@ export default function TalentDiscovery() {
       const res = await createCandidate({ ...form, skills });
       await analyzeCandidate(res.data.id);
       setShowModal(false);
-      setForm({ name: '', email: '', role: '', github_url: '', portfolio_url: '', skills: '' });
+      setForm({ name: '', email: '', role: '', github_url: '', portfolio_url: '', linkedin_url: '', skills: '' });
       load();
     } catch (err) {
       if (err.response?.status === 409) setErrors({ email: 'This email already exists' });
     } finally { setSubmitting(false); }
+  };
+
+  const handleLoadDemo = async () => {
+    if (!confirm('Load 3 demo candidates for the hackathon?')) return;
+    setLoading(true);
+    const demos = [
+      { name: "Dan Abramov", email: "dan@react.dev", role: "Software Engineer", github_url: "https://github.com/gaearon", portfolio_url: "https://overreacted.io", linkedin_url: "https://linkedin.com/in/danabramov", skills: ["React", "JavaScript", "Redux"] },
+      { name: "Mona Lisa", email: "mona@github.com", role: "DevOps Engineer", github_url: "https://github.com/octocat", portfolio_url: "https://octodex.github.com", linkedin_url: "", skills: ["Ruby", "Git", "Infrastructure"] },
+      { name: "Alice Smith", email: "alice@marketing.com", role: "Marketing Manager", github_url: "", portfolio_url: "https://alicesmith.com", linkedin_url: "https://linkedin.com/in/alicesmith", skills: ["SEO", "Content Strategy", "Analytics"] }
+    ];
+    try {
+      for (const d of demos) {
+        const res = await createCandidate(d);
+        await analyzeCandidate(res.data.id);
+      }
+    } catch(e) { console.error('Demo load failed', e); }
+    load();
   };
 
   const handleAnalyze = async (id, e) => {
@@ -80,9 +97,11 @@ export default function TalentDiscovery() {
         <div>
           <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--color-module-1)', marginBottom: 6 }}>MODULE 1</div>
           <h1 className="page-title">Talent Discovery Engine</h1>
-          <p className="page-subtitle">Score candidates beyond resumes using real signals</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowModal(true)}><Plus size={16} /> Add Candidate</button>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button className="btn btn-secondary" onClick={handleLoadDemo} disabled={loading}><Zap size={16} /> Demo Mode</button>
+          <button className="btn btn-primary" onClick={() => setShowModal(true)}><Plus size={16} /> Add Candidate</button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -206,6 +225,10 @@ export default function TalentDiscovery() {
               <div className="form-group">
                 <label className="form-label">Portfolio URL</label>
                 <input className="input" value={form.portfolio_url} onChange={e => setForm({...form, portfolio_url: e.target.value})} placeholder="https://yourportfolio.com" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">LinkedIn URL</label>
+                <input className="input" value={form.linkedin_url} onChange={e => setForm({...form, linkedin_url: e.target.value})} placeholder="https://linkedin.com/in/username" />
               </div>
               <div className="form-group">
                 <label className="form-label">Skills (comma-separated)</label>

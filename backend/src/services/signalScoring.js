@@ -6,6 +6,7 @@ export function computeSignalScores({ githubData, candidate }) {
   const g = githubData || {};
   const skills = candidate.skills || [];
   const hasPortfolio = !!candidate.portfolio_url;
+  const hasLinkedIn = !!candidate.linkedin_url;
 
   // TECHNICAL (0–100)
   const repoScore = Math.min(g.public_repos || 0, 30) * (10 / 30); // max 10
@@ -15,11 +16,12 @@ export function computeSignalScores({ githubData, candidate }) {
   const technical = Math.round((technicalRaw / 30) * 100);
 
   // COMMUNICATION (0–100)
-  const portfolioBonus = hasPortfolio ? 20 : 0;
+  const portfolioBonus = hasPortfolio ? 15 : 0;
+  const linkedinBonus = hasLinkedIn ? 15 : 0;
   const skillsScore = Math.min(skills.length, 10) * 5; // max 50
-  const bioScore = g.bio ? 15 : 0;
-  const blogScore = g.blog ? 15 : 0;
-  const communicationRaw = portfolioBonus + skillsScore + bioScore + blogScore; // max 100
+  const bioScore = g.bio ? 10 : 0;
+  const blogScore = g.blog ? 10 : 0;
+  const communicationRaw = portfolioBonus + linkedinBonus + skillsScore + bioScore + blogScore; // max 100
   const communication = Math.min(Math.round(communicationRaw), 100);
 
   // CREATIVITY (0–100)
@@ -30,11 +32,12 @@ export function computeSignalScores({ githubData, candidate }) {
   const creativity = Math.min(Math.round(creativityRaw), 100);
 
   // CULTURE FIT (0–100) — heuristic
-  const activeBonus = (g.recent_repos_30d || 0) > 0 ? 25 : 0;
-  const communityBonus = Math.min((g.followers || 0), 50) / 50 * 25;
-  const skillsDiversityBonus = skills.length >= 5 ? 30 : skills.length * 6;
+  const activeBonus = (g.recent_repos_30d || 0) > 0 ? 20 : 0;
+  const communityBonus = Math.min((g.followers || 0), 50) / 50 * 20;
+  const skillsDiversityBonus = skills.length >= 5 ? 20 : skills.length * 4;
   const roleAlignmentBonus = 20; // base for applying
-  const cultureFitRaw = activeBonus + communityBonus + skillsDiversityBonus + roleAlignmentBonus;
+  const linkedinCultureBonus = hasLinkedIn ? 20 : 0;
+  const cultureFitRaw = activeBonus + communityBonus + skillsDiversityBonus + roleAlignmentBonus + linkedinCultureBonus;
   const cultureFit = Math.min(Math.round(cultureFitRaw), 100);
 
   // GROWTH POTENTIAL (0–100)
@@ -63,7 +66,8 @@ export function estimateScores(candidate) {
   const skillsBonus = Math.min(skills.length * 4, 30);
   const portfolioBonus = candidate.portfolio_url ? 10 : 0;
   const githubBonus = candidate.github_url ? 10 : 0;
-  const total = base + skillsBonus + portfolioBonus + githubBonus;
+  const linkedinBonus = candidate.linkedin_url ? 15 : 0;
+  const total = base + skillsBonus + portfolioBonus + githubBonus + linkedinBonus;
 
   return {
     score_technical: Math.min(total + Math.round(Math.random() * 10 - 5), 100),

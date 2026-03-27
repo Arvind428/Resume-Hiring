@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from 'recharts';
-import { Send, CheckCircle } from 'lucide-react';
+import { Send, CheckCircle, Mic, MicOff } from 'lucide-react';
 import { getInterview, respondInterview } from '../lib/api';
 import { scoreColor, dimensionLabel } from '../lib/utils';
 
@@ -17,6 +17,7 @@ export default function InterviewSession() {
   const [aiTyping, setAiTyping] = useState(false);
   const [aggregateScores, setAggregateScores] = useState(null);
   const [error, setError] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
   const bottomRef = useRef(null);
 
   useEffect(() => {
@@ -35,6 +36,35 @@ export default function InterviewSession() {
   }, [id]);
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [session, aiTyping]);
+
+  useEffect(() => {
+    return () => { if (window.currentRecognition) window.currentRecognition.stop(); };
+  }, []);
+
+  const toggleRecording = () => {
+    if (isRecording) {
+      if (window.currentRecognition) window.currentRecognition.stop();
+      setIsRecording(false);
+      return;
+    }
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return setError('Speech Recognition not supported in this browser.');
+    
+    setError('');
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = false;
+    recognition.onresult = (e) => {
+      const transcript = Array.from(e.results).map(r => r[0].transcript).join(' ');
+      setAnswer(prev => (prev + (prev.endsWith(' ') ? '' : ' ') + transcript).trim() + ' ');
+    };
+    recognition.onerror = () => setIsRecording(false);
+    recognition.onend = () => setIsRecording(false);
+    
+    window.currentRecognition = recognition;
+    recognition.start();
+    setIsRecording(true);
+  };
 
   const handleSubmit = async () => {
     if (answer.trim().length < 20) { setError('Answer must be at least 20 characters'); return; }
@@ -152,9 +182,15 @@ export default function InterviewSession() {
               <span style={{ fontSize: 12, color: answer.length < 20 ? 'var(--color-danger)' : 'var(--color-text-dim)' }}>
                 {answer.length} chars {answer.length < 20 && `(${20 - answer.length} more)`}
               </span>
-              <button className="btn btn-primary" onClick={handleSubmit} disabled={submitting || answer.length < 20}>
-                {submitting ? 'Analyzing...' : <><Send size={15} /> Submit Answer</>}
-              </button>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button className={`btn ${isRecording ? 'btn-danger' : 'btn-secondary'}`} onClick={toggleRecording} disabled={submitting}>
+                  {isRecording ? <MicOff size={15}/> : <Mic size={15}/>} 
+                  {isRecording ? 'Stop Recording' : 'Speak Answer'}
+                </button>
+                <button className="btn btn-primary" onClick={handleSubmit} disabled={submitting || answer.length < 20}>
+                  {submitting ? 'Analyzing...' : <><Send size={15} /> Submit Answer</>}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -190,7 +226,7 @@ export default function InterviewSession() {
           <div className="card" style={{ marginTop: 12 }}>
             <div style={{ fontSize: 13, color: 'var(--color-text-muted)', lineHeight: 1.6 }}>
               <strong style={{ color: 'var(--color-text)' }}>Ctrl+Enter</strong> to submit<br />
-              Claude adapts each question based on your previous answers.
+              Featherless AI adapts each question based on your answers.
             </div>
           </div>
         </div>

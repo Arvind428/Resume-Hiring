@@ -1,5 +1,8 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, MessageSquare, Scale, ArrowRight, Zap, Brain, Target } from 'lucide-react';
+import { Users, MessageSquare, Scale, ArrowRight, Zap, Brain, Target, BarChart2 } from 'lucide-react';
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts';
+import { getCandidates } from '../lib/api';
 
 const modules = [
   {
@@ -47,6 +50,25 @@ const stats = [
 ];
 
 export default function Dashboard() {
+  const [candidates, setCandidates] = useState([]);
+  
+  useEffect(() => {
+    getCandidates().then(r => setCandidates(r.data)).catch(console.error);
+  }, []);
+
+  const radarData = candidates.length > 0 ? [
+    { dimension: 'Technical', value: Math.round(candidates.reduce((a, c) => a + (c.score_technical || 0), 0) / candidates.length) },
+    { dimension: 'Communication', value: Math.round(candidates.reduce((a, c) => a + (c.score_communication || 0), 0) / candidates.length) },
+    { dimension: 'Creativity', value: Math.round(candidates.reduce((a, c) => a + (c.score_creativity || 0), 0) / candidates.length) },
+    { dimension: 'Culture Fit', value: Math.round(candidates.reduce((a, c) => a + (c.score_culture_fit || 0), 0) / candidates.length) },
+    { dimension: 'Growth', value: Math.round(candidates.reduce((a, c) => a + (c.score_growth || 0), 0) / candidates.length) },
+  ] : [];
+
+  const rolesDataArr = candidates.reduce((acc, c) => {
+    acc[c.role] = (acc[c.role] || 0) + 1; return acc;
+  }, {});
+  const rolesData = Object.keys(rolesDataArr).map(k => ({ name: k, count: rolesDataArr[k] })).sort((a,b) => b.count - a.count);
+
   return (
     <div className="page-container">
       {/* Hero */}
@@ -71,6 +93,38 @@ export default function Dashboard() {
           ))}
         </div>
       </div>
+
+      {/* Analytics Dashboard Panel */}
+      {candidates.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 24, marginBottom: 40 }}>
+          <div className="card" style={{ padding: 24 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}><BarChart2 size={18} color="var(--color-module-1)"/> Global Applicant Signal Averages</h3>
+            <ResponsiveContainer width="100%" height={260}>
+              <RadarChart data={radarData}>
+                <PolarGrid stroke="var(--color-border)" />
+                <PolarAngleAxis dataKey="dimension" tick={{ fill: 'var(--color-text-muted)', fontSize: 12 }} />
+                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                <Radar name="Averages" dataKey="value" stroke="var(--color-module-1)" fill="var(--color-module-1)" fillOpacity={0.2} />
+                <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)', borderRadius: 8 }} />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+          
+          <div className="card" style={{ padding: 24 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}><Users size={18} color="var(--color-module-2)"/> Candidate Pipeline by Role</h3>
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={rolesData} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
+                <XAxis type="number" hide />
+                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: 'var(--color-text-muted)', fontSize: 12 }} width={120} />
+                <Tooltip cursor={{ fill: 'var(--color-surface-2)' }} contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)', borderRadius: 8 }} />
+                <Bar dataKey="count" radius={[0,4,4,0]} barSize={24}>
+                  {rolesData.map((d, i) => <Cell key={i} fill="var(--color-module-2)" />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
 
       {/* Module Cards */}
       <div className="grid-3" style={{ marginTop: 8 }}>
