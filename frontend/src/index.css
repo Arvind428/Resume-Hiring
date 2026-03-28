@@ -3,24 +3,24 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --color-primary: #6366F1;
-  --color-primary-dark: #4F46E5;
-  --color-primary-glow: rgba(99,102,241,0.2);
-  --color-bg: #0A0B14;
-  --color-surface: #12131F;
-  --color-surface-2: #1A1B2E;
-  --color-border: rgba(255,255,255,0.08);
-  --color-border-hover: rgba(255,255,255,0.16);
-  --color-text: #F1F5F9;
-  --color-text-muted: #94A3B8;
-  --color-text-dim: #475569;
+  --color-primary: #3B82F6;
+  --color-primary-dark: #2563EB;
+  --color-primary-glow: rgba(59,130,246,0.2);
+  --color-bg: #F9FAFB;
+  --color-surface: #FFFFFF;
+  --color-surface-2: #F1F5F9;
+  --color-border: rgba(0,0,0,0.1);
+  --color-border-hover: rgba(0,0,0,0.15);
+  --color-text: #0F172A;
+  --color-text-muted: #475569;
+  --color-text-dim: #94A3B8;
   --color-success: #10B981;
   --color-warning: #F59E0B;
   --color-danger: #EF4444;
   --color-info: #3B82F6;
-  --color-module-1: #8B5CF6;
-  --color-module-2: #06B6D4;
-  --color-module-3: #F59E0B;
+  --color-module-1: #3B82F6;
+  --color-module-2: #3B82F6;
+  --color-module-3: #3B82F6;
 }
 
 html, body { height: 100%; font-family: 'Inter', sans-serif; background: var(--color-bg); color: var(--color-text); font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
@@ -33,10 +33,10 @@ a { color: var(--color-primary); text-decoration: none; }
 
 /* BUTTONS */
 .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s ease; min-height: 40px; font-family: 'Inter', sans-serif; white-space: nowrap; }
-.btn-primary { background: var(--color-primary); color: white; }
-.btn-primary:hover { background: var(--color-primary-dark); box-shadow: 0 0 20px var(--color-primary-glow); transform: translateY(-1px); }
-.btn-secondary { background: transparent; color: var(--color-text); border: 1px solid var(--color-border); }
-.btn-secondary:hover { border-color: var(--color-border-hover); background: var(--color-surface-2); }
+.btn-primary { background: #FFFFFF; color: var(--color-primary); border: 1px solid var(--color-primary); }
+.btn-primary:hover { background: var(--color-surface-2); box-shadow: 0 4px 14px var(--color-primary-glow); transform: translateY(-1px); }
+.btn-secondary { background: #FFFFFF; color: var(--color-text); border: 1px solid var(--color-border); }
+.btn-secondary:hover { border-color: var(--color-primary); color: var(--color-primary); background: #FFFFFF; }
 .btn-danger { background: var(--color-danger); color: white; }
 .btn-danger:hover { opacity: 0.85; }
 .btn-sm { padding: 6px 14px; font-size: 13px; min-height: 32px; }
@@ -62,10 +62,10 @@ a { color: var(--color-primary); text-decoration: none; }
 .badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; }
 .badge-hire { background: var(--color-success); color: white; }
 .badge-strong { background: var(--color-primary); color: white; }
-.badge-maybe { background: var(--color-warning); color: #0A0B14; }
+.badge-maybe { background: var(--color-warning); color: white; }
 .badge-reject { background: var(--color-danger); color: white; }
-.badge-active { background: rgba(16,185,129,0.15); color: var(--color-success); }
-.badge-complete { background: rgba(99,102,241,0.15); color: var(--color-primary); }
+.badge-active { background: rgba(59,130,246,0.1); color: var(--color-primary); }
+.badge-complete { background: rgba(59,130,246,0.1); color: var(--color-primary); }
 
 /* LAYOUT */
 .page-container { max-width: 1200px; margin: 0 auto; padding: 24px; width: 100%; }
@@ -164,7 +164,7 @@ tr:last-child td { border-bottom: none; }
 .chat-messages { display: flex; flex-direction: column; gap: 16px; padding: 8px 0; }
 .chat-bubble { max-width: 80%; padding: 14px 18px; border-radius: 16px; font-size: 15px; line-height: 1.6; }
 .chat-bubble-ai { background: var(--color-surface-2); border: 1px solid var(--color-border); align-self: flex-start; border-bottom-left-radius: 4px; }
-.chat-bubble-user { background: var(--color-primary); color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+.chat-bubble-user { background: #FFFFFF; color: var(--color-primary); border: 1px solid var(--color-primary); align-self: flex-end; border-bottom-right-radius: 4px; }
 .chat-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-dim); margin-bottom: 4px; }
 
 /* MODULE ACCENT LINES */

@@ -11,7 +11,10 @@ router.post('/debate', async (req, res, next) => {
     if (!candidateIds || candidateIds.length !== 3) return res.status(400).json({ error: 'Exactly 3 candidateIds required.' });
 
     const { data: candidates, error } = await supabase.from('candidates').select('*').in('id', candidateIds);
-    if (error || candidates.length !== 3) return res.status(404).json({ error: 'Failed to fetch all 3 candidates.' });
+    if (error || !candidates || candidates.length !== 3) {
+      console.error('[SIMULATION DB ERROR] Failed fetching candidates:', { error, candidateIds, foundLength: candidates?.length });
+      return res.status(404).json({ error: `Failed to fetch all 3 candidates. Found: ${candidates?.length || 0}. See backend console.` });
+    }
 
     const { generateSimulationDebate } = await import('../services/aiService.js');
     const debate = await generateSimulationDebate(candidates, jobDescription);
