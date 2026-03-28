@@ -119,24 +119,47 @@ export default function CandidateDetail() {
           </ResponsiveContainer>
         </div>
 
-        {/* GitHub Data */}
-        {candidate.github_data && (
+        {/* AI Rubric Insights */}
+        {(candidate.analysis_strengths || candidate.analysis_weaknesses) && (
           <div className="card" style={{ gridColumn: '1 / -1' }}>
-            <h3 style={{ marginBottom: 16, fontSize: '1rem', fontWeight: 700 }}>GitHub Signals</h3>
-            <div className="grid-4">
-              {[
-                { label: 'Public Repos', value: candidate.github_data.public_repos },
-                { label: 'Active (90d)', value: candidate.github_data.recent_repos_90d },
-                { label: 'Total Stars', value: candidate.github_data.total_stars },
-                { label: 'Unique Topics', value: candidate.github_data.unique_topics },
-                { label: 'Followers', value: candidate.github_data.followers },
-                { label: 'Has Blog', value: candidate.github_data.blog ? 'Yes' : 'No' },
-                { label: 'Account Age', value: `${candidate.github_data.account_age_years}y` },
-                { label: 'Active (30d)', value: candidate.github_data.recent_repos_30d },
-              ].map(s => (
-                <div key={s.label} className="card card-elevated" style={{ textAlign: 'center', padding: 16 }}>
-                  <div style={{ fontSize: 22, fontWeight: 700, fontFamily: 'JetBrains Mono', color: 'var(--color-primary)', marginBottom: 4 }}>{s.value}</div>
-                  <div style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>{s.label}</div>
+            <h3 style={{ marginBottom: 16, fontSize: '1rem', fontWeight: 700 }}>AI Rubric Insights</h3>
+            <div className="grid-3" style={{ gap: 16 }}>
+              <div className="card card-elevated" style={{ background: 'rgba(34, 197, 94, 0.05)' }}>
+                <h4 style={{ color: 'var(--color-success)', marginBottom: 12 }}>Key Strengths</h4>
+                <ul style={{ paddingLeft: 16, color: 'var(--color-text)', fontSize: 13, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {(candidate.analysis_strengths || []).map((s,i) => <li key={i}>{s}</li>)}
+                </ul>
+              </div>
+              <div className="card card-elevated" style={{ background: 'rgba(234, 179, 8, 0.05)' }}>
+                <h4 style={{ color: 'var(--color-warning)', marginBottom: 12 }}>Identified Weaknesses</h4>
+                <ul style={{ paddingLeft: 16, color: 'var(--color-text)', fontSize: 13, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {(candidate.analysis_weaknesses || []).map((s,i) => <li key={i}>{s}</li>)}
+                </ul>
+              </div>
+              <div className="card card-elevated" style={{ background: 'rgba(239, 68, 68, 0.05)' }}>
+                <h4 style={{ color: 'var(--color-danger)', marginBottom: 12 }}>Missing Requirements</h4>
+                <ul style={{ paddingLeft: 16, color: 'var(--color-text)', fontSize: 13, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {(candidate.analysis_missing || []).map((s,i) => <li key={i}>{s}</li>)}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* AI Interview Generation */}
+        {candidate.interview_questions && candidate.interview_questions.length > 0 && (
+          <div className="card" style={{ gridColumn: '1 / -1' }}>
+            <h3 style={{ marginBottom: 16, fontSize: '1rem', fontWeight: 700 }}>AI-Generated Interview Protocol</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {candidate.interview_questions.map((q, i) => (
+                <div key={i} className="card card-elevated" style={{ padding: '16px 20px', borderLeft: `4px solid ${q.type === 'technical' ? 'var(--color-primary)' : 'var(--color-warning)'}` }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                    <span className="tag" style={{ background: q.type === 'technical' ? 'var(--color-primary-glow)' : 'rgba(234, 179, 8, 0.1)', color: q.type === 'technical' ? 'var(--color-primary)' : '#c2410c' }}>
+                      {(q.type || 'General').toUpperCase()}
+                    </span>
+                    <span style={{ fontSize: 12, color: 'var(--color-text-muted)', fontWeight: 600 }}>QUESTION {i + 1}</span>
+                  </div>
+                  <div style={{ fontSize: 15, fontWeight: 500, lineHeight: 1.5, color: 'var(--color-text)' }}>{q.question}</div>
                 </div>
               ))}
             </div>

@@ -4,6 +4,22 @@ import { mediateHiringDecision } from '../services/aiService.js';
 
 const router = Router();
 
+// POST /api/simulations/debate
+router.post('/debate', async (req, res, next) => {
+  try {
+    const { candidateIds, jobDescription } = req.body;
+    if (!candidateIds || candidateIds.length !== 3) return res.status(400).json({ error: 'Exactly 3 candidateIds required.' });
+
+    const { data: candidates, error } = await supabase.from('candidates').select('*').in('id', candidateIds);
+    if (error || candidates.length !== 3) return res.status(404).json({ error: 'Failed to fetch all 3 candidates.' });
+
+    const { generateSimulationDebate } = await import('../services/aiService.js');
+    const debate = await generateSimulationDebate(candidates, jobDescription);
+
+    res.json({ debate, candidates });
+  } catch (err) { next(err); }
+});
+
 const STAKEHOLDERS = ['tech_lead', 'hr_director', 'ceo'];
 const DIMENSIONS = ['technical_skill', 'communication', 'culture_fit', 'leadership', 'growth_potential'];
 const WEIGHTS = { tech_lead: 0.40, hr_director: 0.35, ceo: 0.25 };

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Zap, Trash2, ExternalLink, Users } from 'lucide-react';
-import { getCandidates, createCandidate, analyzeCandidate, deleteCandidate } from '../lib/api';
+import { Plus, Search, Zap, Trash2, ExternalLink, Users, UploadCloud } from 'lucide-react';
+import { getCandidates, createCandidate, analyzeCandidate, deleteCandidate, uploadResume } from '../lib/api';
+import { useDropzone } from 'react-dropzone';
 import { scoreColor, formatDate } from '../lib/utils';
 
 const ROLES = ['Software Engineer', 'Product Manager', 'Designer', 'Data Scientist', 'DevOps Engineer', 'Marketing Manager', 'Sales', 'Other'];
@@ -22,10 +23,46 @@ export default function TalentDiscovery() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [search, setSearch] = useState('');
+  const [jobDescription, setJobDescription] = useState('We are seeking an experienced developer with a strong background in React, Node.js, and modern AI architectures.');
   const [analyzing, setAnalyzing] = useState({});
-  const [form, setForm] = useState({ name: '', email: '', role: '', github_url: '', portfolio_url: '', linkedin_url: '', skills: '' });
+  const [uploading, setUploading] = useState(false);
+  const [form, setForm] = useState({ name: '', email: '', role: '', github_url: '', portfolio_url: '', linkedin_url: '', skills: '', experience: '', projects: '' });
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+
+  const onDrop = async (acceptedFiles) => {
+    const file = acceptedFiles[0];
+    if (!file) return;
+    setUploading(true);
+    const formData = new FormData();
+    formData.append('resume', file);
+    try {
+      const res = await uploadResume(formData);
+      const data = res.data.extractedData;
+      setForm(prev => ({
+        ...prev,
+        name: data.name || '',
+        email: data.email || '',
+        role: data.role || '',
+        github_url: data.github_url || '',
+        portfolio_url: data.portfolio_url || '',
+        linkedin_url: data.linkedin_url || '',
+        skills: data.skills ? data.skills.join(', ') : '',
+        experience: data.experience ? JSON.stringify(data.experience) : '',
+        projects: data.projects ? JSON.stringify(data.projects) : ''
+      }));
+    } catch (err) {
+      alert(err.response?.data?.error || 'Upload failed');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: { 'application/pdf': ['.pdf'], 'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'] },
+    maxFiles: 1
+  });
 
   const load = () => {
     setLoading(true);
@@ -51,9 +88,9 @@ export default function TalentDiscovery() {
     try {
       const skills = form.skills.split(',').map(s => s.trim()).filter(Boolean);
       const res = await createCandidate({ ...form, skills });
-      await analyzeCandidate(res.data.id);
+      await analyzeCandidate(res.data.id, { jobDescription, experience: form.experience, projects: form.projects });
       setShowModal(false);
-      setForm({ name: '', email: '', role: '', github_url: '', portfolio_url: '', linkedin_url: '', skills: '' });
+      setForm({ name: '', email: '', role: '', github_url: '', portfolio_url: '', linkedin_url: '', skills: '', experience: '', projects: '' });
       load();
     } catch (err) {
       if (err.response?.status === 409) setErrors({ email: 'This email already exists' });
@@ -72,7 +109,7 @@ export default function TalentDiscovery() {
       for (const d of demos) {
         try {
           const res = await createCandidate(d);
-          await analyzeCandidate(res.data.id);
+          await analyzeCandidate(res.data.id, { jobDescription });
         } catch (innerErr) {
           if (innerErr.response?.status === 409) {
             console.warn(`Demo candidate ${d.name} already exists! Skipping.`);
@@ -90,7 +127,7 @@ export default function TalentDiscovery() {
   const handleAnalyze = async (id, e) => {
     e.preventDefault(); e.stopPropagation();
     setAnalyzing(prev => ({ ...prev, [id]: true }));
-    try { await analyzeCandidate(id); load(); } finally { setAnalyzing(prev => ({ ...prev, [id]: false })); }
+    try { await analyzeCandidate(id, { jobDescription }); load(); } finally { setAnalyzing(prev => ({ ...prev, [id]: false })); }
   };
 
   const handleDelete = async (id, e) => {
@@ -127,6 +164,18 @@ export default function TalentDiscovery() {
             <div className="stat-label">{s.label}</div>
           </div>
         ))}
+      </div>
+
+      <div className="card" style={{ marginBottom: 24 }}>
+        <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12, color: 'var(--color-text)' }}>Active Job Description (Matrix Matching)</h3>
+        <textarea 
+          className="input" 
+          style={{ minHeight: 80, fontSize: 13, resize: 'vertical' }}
+          value={jobDescription}
+          onChange={e => setJobDescription(e.target.value)}
+          placeholder="Paste your specific job description requirements here..."
+        />
+        <div style={{ fontSize: 12, color: 'var(--color-text-muted)', marginTop: 8 }}>This context is fed natively into the AI for 4-axis rubric scoring and missing skill identification.</div>
       </div>
 
       {/* Search */}
@@ -204,8 +253,27 @@ export default function TalentDiscovery() {
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2 className="modal-title">Add New Candidate</h2>
-              <button className="modal-close" onClick={() => setShowModal(false)}>×</button>
+              <button className="modal-close" onClick={() => setShowModal(false)} disabled={uploading}>×</button>
             </div>
+
+            {/* Drag and Drop Zone */}
+            <div 
+              {...getRootProps()} 
+              style={{
+                border: `2px dashed ${isDragActive ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                borderRadius: 8, padding: '24px', textAlign: 'center', marginBottom: 20, 
+                background: isDragActive ? 'var(--color-primary-glow)' : 'transparent',
+                cursor: 'pointer', transition: 'all 0.2s ease', opacity: uploading ? 0.6 : 1, pointerEvents: uploading ? 'none' : 'auto'
+              }}
+            >
+              <input {...getInputProps()} />
+              <UploadCloud size={28} color="var(--color-primary)" style={{ marginBottom: 12 }} />
+              <div style={{ fontWeight: 600, marginBottom: 6 }}>{uploading ? 'Extracting via AI...' : (isDragActive ? 'Drop resume here...' : 'Drag & Drop Resume (PDF/DOCX)')}</div>
+              <div style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>Or click to browse files. The AI will instantly auto-fill the form below.</div>
+            </div>
+
+            <div style={{ textAlign: 'center', color: 'var(--color-text-muted)', fontSize: 11, marginBottom: 20, textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700 }}>— Confirm Details —</div>
+
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div className="grid-2">
                 <div className="form-group">

@@ -2,8 +2,11 @@ import { Router } from 'express';
 import supabase from '../services/supabaseClient.js';
 import { fetchGithubData } from '../services/githubService.js';
 import { computeSignalScores, estimateScores } from '../services/signalScoring.js';
+import multer from 'multer';
+import { parseResumeText } from '../services/aiService.js';
 
 const router = Router();
+const upload = multer({ storage: multer.memoryStorage() });
 
 // POST /api/candidates — create candidate
 router.post('/', async (req, res, next) => {
@@ -22,6 +25,22 @@ router.post('/', async (req, res, next) => {
       throw error;
     }
     res.status(201).json(data);
+  } catch (err) { next(err); }
+});
+
+// POST /api/candidates/upload — parse PDF resume without saving immediately to database
+router.post('/upload', upload.single('resume'), async (req, res, next) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No PDF file uploaded' });
+    
+    // Dynamic import to bypass Node ESM bugs with pdf-parse
+    const pdfModule = await import('pdf-parse');
+    const pdfParse = pdfModule.default || pdfModule;
+    const pdfData = await pdfParse(req.file.buffer);
+    
+    // Feature 2: Strict AI JSON Extraction
+    const parsed = await parseResumeText(pdfData.text);
+    res.json({ extractedData: parsed });
   } catch (err) { next(err); }
 });
 
@@ -56,6 +75,7 @@ router.get('/:id', async (req, res, next) => {
 // POST /api/candidates/:id/analyze — run signal scoring
 router.post('/:id/analyze', async (req, res, next) => {
   try {
+    const { jobDescription, experience, projects } = req.body;
     const { data: candidate, error } = await supabase
       .from('candidates')
       .select('*')
@@ -63,21 +83,28 @@ router.post('/:id/analyze', async (req, res, next) => {
       .single();
     if (error || !candidate) return res.status(404).json({ error: 'Candidate not found' });
 
-    let githubData = null;
-    let estimated = false;
+    // Deep AI Rubric Parsing (Features 3, 4, 5, 8) + External OSINT (Phase 4)
+    const { generateRubricScoring, fetchGithubMatrix } = await import('../services/aiService.js');
+    
+    // Attempt Zero-Trust verification against actual GitHub footprint
+    let githubMatrix = null;
+    if (candidate.github_url) githubMatrix = await fetchGithubMatrix(candidate.github_url);
 
-    if (candidate.github_url) {
-      githubData = await fetchGithubData(candidate.github_url);
-      if (!githubData) estimated = true;
-    }
-
-    const scores = githubData
-      ? computeSignalScores({ githubData, candidate })
-      : estimateScores(candidate);
+    const analysis = await generateRubricScoring(candidate, experience, projects, jobDescription, githubMatrix);
 
     const updatePayload = {
-      ...scores,
-      github_data: githubData,
+      score_technical: analysis.score_technical,
+      score_communication: analysis.score_communication,
+      score_creativity: analysis.score_creativity,
+      score_culture_fit: analysis.score_culture_fit,
+      score_growth: analysis.score_growth,
+      skills_score: analysis.skills_score,
+      experience_score: analysis.experience_score,
+      project_score: analysis.project_score,
+      analysis_strengths: analysis.strengths,
+      analysis_weaknesses: analysis.weaknesses,
+      analysis_missing: analysis.missing_skills,
+      interview_questions: analysis.interview_questions
     };
 
     const { data: updated, error: updateErr } = await supabase
@@ -88,7 +115,7 @@ router.post('/:id/analyze', async (req, res, next) => {
       .single();
 
     if (updateErr) throw updateErr;
-    res.json({ ...updated, estimated });
+    res.json(updated);
   } catch (err) { next(err); }
 });
 

@@ -5,6 +5,7 @@ import rateLimit from 'express-rate-limit';
 import candidatesRouter from './routes/candidates.js';
 import interviewsRouter from './routes/interviews.js';
 import simulationsRouter from './routes/simulations.js';
+import chatRouter from './routes/chat.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
@@ -23,6 +24,7 @@ app.use('/api/', limiter);
 app.use('/api/candidates', candidatesRouter);
 app.use('/api/interviews', interviewsRouter);
 app.use('/api/simulations', simulationsRouter);
+app.use('/api/chat', chatRouter);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
